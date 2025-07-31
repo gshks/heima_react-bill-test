@@ -89,3 +89,6 @@ onChange与onClick区别：
 ![1753865201502](image/README/1753865201502.png)
 
 onCancel
+
+
+点击确定切换时间显示
