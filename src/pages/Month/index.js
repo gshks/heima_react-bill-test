@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { useSelector } from 'react-redux'
 import { useMemo } from 'react'
 import _ from 'lodash'
+import React, { useEffect } from 'react'
 
 const Month = () => {
     // 按月做数据的分组
@@ -32,6 +33,14 @@ const monthResult = useMemo(() => {
         total:income + pay
     }
 },[currentMonthList])
+// 初始化的时候把当前月的统计数据显示出来
+useEffect(() => {
+  const nowDate = dayjs().format('YYYY-MM')
+//   边界值控制
+  if (monthGroup[nowDate]){
+    setMonthList(monthGroup[nowDate])
+  }
+},[monthGroup])
 //确认回调
 const onConfirm = (date) => {
     setDateVisible(false)
