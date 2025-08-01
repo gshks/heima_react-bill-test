@@ -7,50 +7,63 @@ import { useSelector } from 'react-redux'
 import { useMemo } from 'react'
 import _ from 'lodash'
 import React, { useEffect } from 'react'
+import DailyBill from './components/index'
+
+
+
 
 const Month = () => {
     // 按月做数据的分组
     const billList = useSelector(state => state.bill.billList)
     const monthGroup = useMemo(() => {
         return _.groupBy(billList, (item) => dayjs(item.date).format('YYYY-MM'))
-    },[billList])
+    }, [billList])
     console.log(monthGroup)
     // 控制弹框的打开和关闭
-    const [dateVisible,setDateVisible] = useState(false)  //false是关闭，true是打开
+    const [dateVisible, setDateVisible] = useState(false)  //false是关闭，true是打开
 
-// 控制时间显示
-const [currentDate,setCurrentDate] = useState(() =>{
-    return dayjs(new Date()).format('YYYY-MM')
-})
-const [currentMonthList,setMonthList] = useState([])
+    // 控制时间显示
+    const [currentDate, setCurrentDate] = useState(() => {
+        return dayjs(new Date()).format('YYYY-MM')
+    })
+    const [currentMonthList, setMonthList] = useState([])
 
-const monthResult = useMemo(() => {
-    const pay = currentMonthList.filter(item => item.type === 'pay').reduce((a,c) => a + c.money,0)
-    const income = currentMonthList.filter(item => item.type === 'income').reduce((a,c) => a + c.money,0)
-    return {
-        pay,
-        income,
-        total:income + pay
+    const monthResult = useMemo(() => {
+        const pay = currentMonthList.filter(item => item.type === 'pay').reduce((a, c) => a + c.money, 0)
+        const income = currentMonthList.filter(item => item.type === 'income').reduce((a, c) => a + c.money, 0)
+        return {
+            pay,
+            income,
+            total: income + pay
+        }
+    }, [currentMonthList])
+    // 初始化的时候把当前月的统计数据显示出来
+    useEffect(() => {
+        const nowDate = dayjs().format('YYYY-MM')
+        //   边界值控制
+        if (monthGroup[nowDate]) {
+            setMonthList(monthGroup[nowDate])
+        }
+    }, [monthGroup])
+    //确认回调
+    const onConfirm = (date) => {
+        setDateVisible(false)
+        // 其他逻辑
+        console.log(date)
+        const formatDate = dayjs(date).format('YYYY-MM')
+        console.log(formatDate)
+        setMonthList(monthGroup[formatDate])
+        setCurrentDate(formatDate)
     }
-},[currentMonthList])
-// 初始化的时候把当前月的统计数据显示出来
-useEffect(() => {
-  const nowDate = dayjs().format('YYYY-MM')
-//   边界值控制
-  if (monthGroup[nowDate]){
-    setMonthList(monthGroup[nowDate])
-  }
-},[monthGroup])
-//确认回调
-const onConfirm = (date) => {
-    setDateVisible(false)
-    // 其他逻辑
-    console.log(date)
-    const formatDate = dayjs(date).format('YYYY-MM')
-    console.log(formatDate)
-    setMonthList(monthGroup[formatDate])
-    setCurrentDate(formatDate)
-}
+    // 当前月按照日来分组
+    const dayGroup = useMemo(() => {
+        const groupData = _.groupBy(currentMonthList, (item) => dayjs(item.date).format('YYYY-MM-DD'))
+        const keys = Object.keys(groupData)
+        return{
+            groupData,
+            keys
+      }
+     }, [currentMonthList])
     return (
         <div className="monthlyBill">
             <NavBar className="nav" backArrow={false}>
@@ -61,9 +74,9 @@ const onConfirm = (date) => {
                     {/* 时间切换区域 */}
                     <div className="date" onClick={() => setDateVisible(true)}>
                         <span className="text">
-                           {currentDate + ''}月账单
+                            {currentDate + ''}月账单
                         </span>
-                        <span className={classNames('arrow',dateVisible && 'expand')}></span>
+                        <span className={classNames('arrow', dateVisible && 'expand')}></span>
                     </div>
                     {/* 统计区域 */}
                     <div className='twoLineOverview'>
@@ -86,12 +99,18 @@ const onConfirm = (date) => {
                         title="记账日期"
                         precision="month"
                         visible={dateVisible}
-                        onCancel ={()=>setDateVisible(false)}
-                        onConfirm ={onConfirm}
-                        onClose ={()=>setDateVisible(false)}
+                        onCancel={() => setDateVisible(false)}
+                        onConfirm={onConfirm}
+                        onClose={() => setDateVisible(false)}
                         max={new Date()}
                     />
                 </div>
+                {/* 单日列表统计 */}
+                {
+                    dayGroup.keys.map(key => {
+                        return <DailyBill key={key} data={key} billList={dayGroup.groupData[key]}/>
+                    })
+                }
             </div>
         </div >
     )
